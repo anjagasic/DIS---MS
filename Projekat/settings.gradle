@@ -1,0 +1,7 @@
+include ':api'
+include ':util'
+include ':microservices:program-service'
+include ':microservices:employee-service'
+include ':microservices:client-service'
+include ':microservices:gym-service'
+include ':microservices:gym-composite-service'
