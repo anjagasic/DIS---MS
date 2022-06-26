@@ -1,0 +1,6 @@
+rootProject.name = 'client-service'
+//include ':api'
+//include ':util'
+//include':util'
+//project(':util').projectDir = file('util')
+//project(':api').projectDir = new File('../Projekat/api')

@@ -1,0 +1,21 @@
+server.port: 7000
+server.error.include-message: always
+
+app:
+ gym-service:
+  host: localhost
+  port: 7001
+ client-service:
+  host: localhost
+  port: 7002
+ employee-service:
+  host: localhost
+  port: 7003
+ program-service:
+  host: localhost
+  port: 7004
+
+logging:
+  level:
+    root: INFO
+    microservices: DEBUG
