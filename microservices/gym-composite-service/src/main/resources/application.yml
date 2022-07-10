@@ -1,3 +1,39 @@
+api:
+  common:
+    version: 1.0.0
+    title: Sample API
+    description: Description of the API...
+    termsOfServiceUrl: MINE TERMS OF SERVICE URL
+    license: License
+    licenseUrl: MY LICENSE URL
+
+    contact:
+      name: Anja Gasic
+      url: https://github.com/anjagasic
+      email: gasica7@gmail.com
+
+  gym-composite:
+    get-composite-gym:
+      description: Returns a composite view of the specified gym id
+      notes: |
+        # Normal response
+        If the requested gym id is found the method will return information regarding:
+        1. Base gym information
+        1. Client
+        1. Employees
+        1. Programs
+        1. Service Addresses\n(technical information regarding the addresses of the microservices that created the response)
+        # Expected partial and error responses
+        In the following cases, only a partial response be created (used to simplify testing of error conditions)
+        ## Gym id 113
+        200 - Ok
+        ## Non numerical gym id
+        400 - A <b>Bad Request</b> error will be returned
+        ## Gym id 13
+        404 - A <b>Not Found</b> error will be returned
+        ## Negative meal ids
+        422 - An <b>Unprocessable Entity</b> error will be returned
+
 server.port: 7000
 server.error.include-message: always
 
