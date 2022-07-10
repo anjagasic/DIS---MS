@@ -5,3 +5,8 @@ logging:
   level:
     root: INFO
     microservices: DEBUG
+
+---
+spring.profiles: docker
+
+server.port: 8081

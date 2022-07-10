@@ -1,0 +1,34 @@
+version: '2.1'
+
+services:
+  client:
+    build: microservices/client-service
+    mem_limit: 350m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  employee:
+    build: microservices/employee-service
+    mem_limit: 350m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  gym:
+    build: microservices/gym-service
+    mem_limit: 350m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  program:
+    build: microservices/program-service
+    mem_limit: 350m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  gym-composite:
+    build: microservices/gym-composite-service
+    mem_limit: 350m
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker

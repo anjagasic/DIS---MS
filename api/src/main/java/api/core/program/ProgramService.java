@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface ProgramService {
 
 	/**
-     * Sample usage: curl $HOST:$PORT/origram?gymId=1
+     * Sample usage: curl $HOST:$PORT/program?gymId=1
      *
      * @param gymId
      * @return

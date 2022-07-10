@@ -9,7 +9,7 @@
 #   HOST=localhost PORT=7000 ./test-em-all.bash
 #
 : ${HOST=localhost}
-: ${PORT=7000}
+: ${PORT=8081}
 
 function assertCurl() {
 
@@ -49,36 +49,36 @@ function assertEqual() {
   fi
 }
 
-#function testUrl() {
-#    url=$@
-#    if curl $url -ks -f -o /dev/null
-#    then
-#          echo "Ok"
-#          return 0
-#    else
-#          echo -n "not yet"
-#          return 1
-#    fi;
-#}
-#
-#function waitForService() {
-#    url=$@
-#    echo -n "Wait for: $url... "
-#    n=0
-#    until testUrl $url
-#    do
-#        n=$((n + 1))
-#        if [[ $n == 100 ]]
-#        then
-#            echo " Give up"
-#            exit 1
-#        else
-#            sleep 6
-#            echo -n ", retry #$n "
-#        fi
-#    done
-#}
-#
+function testUrl() {
+    url=$@
+    if curl $url -ks -f -o /dev/null
+    then
+          echo "Ok"
+          return 0
+    else
+          echo -n "not yet"
+          return 1
+    fi;
+}
+
+function waitForService() {
+    url=$@
+    echo -n "Wait for: $url... "
+    n=0
+    until testUrl $url
+    do
+        n=$((n + 1))
+        if [[ $n == 100 ]]
+        then
+            echo " Give up"
+            exit 1
+        else
+            sleep 6
+            echo -n ", retry #$n "
+        fi
+    done
+}
+
 #function recreateComposite() {
 #    local mealId=$1
 #    local composite=$2
@@ -149,13 +149,13 @@ if [[ $@ == *"start"* ]]
 then
     echo "Restarting the test environment..."
     echo "$ docker-compose down"
-#    docker-compose down
+    docker-compose down
     echo "$ docker-compose up -d"
-#    docker-compose up -d
+    docker-compose up -d
 fi
 
-#waitForService curl -X DELETE http://$HOST:$PORT/gym-composite/1
-#
+waitForService http://$HOST:${PORT}/gym-composite/1
+
 #setupTestdata
 
 # Verify that a normal request works, expect three programs, three clients and three employees
@@ -190,11 +190,11 @@ assertEqual "\"Invalid gymId: -1\"" "$(echo $RESPONSE | jq .message)"
 assertCurl 400 "curl http://$HOST:$PORT/gym-composite/invalidGymId -s"
 assertEqual "\"Type mismatch.\"" "$(echo $RESPONSE | jq .message)"
 
-#if [[ $@ == *"stop"* ]]
-#then
-#    echo "We are done, stopping the test environment..."
-#    echo "$ docker-compose down"
-#    docker-compose down
-#fi
+if [[ $@ == *"stop"* ]]
+then
+    echo "We are done, stopping the test environment..."
+    echo "$ docker-compose down"
+    docker-compose down
+fi
 
-#echo "End:" `date`
+echo "End:" `date`
