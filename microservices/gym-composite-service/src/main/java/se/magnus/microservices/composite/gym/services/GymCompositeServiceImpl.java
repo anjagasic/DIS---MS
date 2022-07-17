@@ -61,7 +61,7 @@ public class GymCompositeServiceImpl implements GymCompositeService {
         // 4. Copy summary employee info, if available
         List<EmployeeSummary> employeeSummaries = (employees == null)  ? null :
         	employees.stream()
-                .map(r -> new EmployeeSummary(r.getFullName()))
+                .map(r -> new EmployeeSummary(r.getEmployeeId(), r.getFullName()))
                 .collect(Collectors.toList());
 
         // 5. Create info regarding the involved microservices addresses

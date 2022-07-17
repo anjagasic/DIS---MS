@@ -31,7 +31,7 @@ api:
         400 - A <b>Bad Request</b> error will be returned
         ## Gym id 13
         404 - A <b>Not Found</b> error will be returned
-        ## Negative meal ids
+        ## Negative gym ids
         422 - An <b>Unprocessable Entity</b> error will be returned
 
 server.port: 7000
