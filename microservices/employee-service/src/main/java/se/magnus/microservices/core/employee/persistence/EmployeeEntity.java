@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class EmployeeEntity {
 
     @Id
-    private int id;
+    private String id;
 
     @Version
     private int version;
@@ -23,19 +23,17 @@ public class EmployeeEntity {
     public EmployeeEntity() {
     }
 
-    public EmployeeEntity(int id, int version, int gymId, int employeeId, String fullName) {
-        this.id = id;
-        this.version = version;
+    public EmployeeEntity(int gymId, int employeeId, String fullName) {
         this.gymId = gymId;
         this.employeeId = employeeId;
         this.fullName = fullName;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

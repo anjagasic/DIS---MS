@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class ClientEntity {
 
     @Id
-    private int id;
+    private String id;
 
     @Version
     private int version;
@@ -18,24 +18,26 @@ public class ClientEntity {
     private int gymId;
     private int clientId;
     private String fullName;
+    private String gender;
+    private String age;
 
 
     public ClientEntity() {
     }
 
-    public ClientEntity(int id, int version, int gymId, int clientId, String fullName) {
-        this.id = id;
-        this.version = version;
+    public ClientEntity(int gymId, int clientId, String fullName, String gender, String age) {
         this.gymId = gymId;
         this.clientId = clientId;
         this.fullName = fullName;
+        this.gender = gender;
+        this.age = age;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -69,5 +71,21 @@ public class ClientEntity {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public String getAge() {
+        return age;
+    }
+
+    public void setAge(String age) {
+        this.age = age;
     }
 }

@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 public class GymEntity {
 
     @Id
-    private int id;
+    private String id;
 
     @Version
     private int version;
@@ -23,19 +23,17 @@ public class GymEntity {
     public GymEntity() {
     }
 
-    public GymEntity(int id, int version, int gymId, int programId, String name, String address) {
-        this.id = id;
-        this.version = version;
+    public GymEntity(int gymId, int programId, String name, String address) {
         this.gymId = gymId;
         this.name = name;
         this.address = address;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

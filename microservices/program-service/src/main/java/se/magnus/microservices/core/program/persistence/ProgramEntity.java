@@ -20,9 +20,7 @@ public class ProgramEntity { //SQL database
     public ProgramEntity() {
     }
 
-    public ProgramEntity(int id, int version, int gymId, int programId, String name) {
-        this.id = id;
-        this.version = version;
+    public ProgramEntity(int gymId, int programId, String name) {
         this.gymId = gymId;
         this.programId = programId;
         this.name = name;

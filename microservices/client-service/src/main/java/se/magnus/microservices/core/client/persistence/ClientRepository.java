@@ -2,10 +2,10 @@ package se.magnus.microservices.core.client.persistence;
 
 import org.springframework.data.repository.CrudRepository;
 
-import java.util.Optional;
+import java.util.List;
 
 
 public interface ClientRepository extends CrudRepository<ClientEntity, String> {
 
-    Optional<ClientEntity> findByGymId(int gymId);
+    List<ClientEntity> findByGymId(int gymId);
 }
