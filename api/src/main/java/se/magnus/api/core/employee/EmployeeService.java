@@ -1,7 +1,6 @@
 package se.magnus.api.core.employee;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -17,4 +16,30 @@ public interface EmployeeService {
         value    = "/employee",
         produces = "application/json")
     List<Employee> getEmployees(@RequestParam(value = "gymId", required = true) int gymId);
+
+    /**
+     * Sample usage:
+     *
+     * curl -X POST $HOST:$PORT/comment \
+     *   -H "Content-Type: application/json" --data \
+     *   '{"mealId":123,"commentId":456,"author":"author","subject":"subj","content":"content", "dateTime":null}'
+     *
+     * @param body
+     * @return
+     */
+    @PostMapping(
+            value    = "/employee",
+            consumes = "application/json",
+            produces = "application/json")
+    Employee createEmployee(@RequestBody Employee body);
+
+    /**
+     * Sample usage:
+     *
+     * curl -X DELETE $HOST:$PORT/employee?gymId=1
+     *
+     * @param gymId
+     */
+    @DeleteMapping(value = "/employee")
+    void deleteEmployees(@RequestParam(value = "gymId", required = true)  int gymId);
 }

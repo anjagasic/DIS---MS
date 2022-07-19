@@ -3,15 +3,15 @@ package se.magnus.api.core.client;
 public class Client {
 	
 	private final int clientId;
-    private final int programId;
+    private final int gymId;
     private final String fullName;
     private final String gender;
     private final String age;
-    private final String serviceAddress;
+    private String serviceAddress;
 
     public Client() {
 		clientId = 0;
-    	programId = 0;
+    	gymId = 0;
     	fullName = null;
     	gender = null;
     	age = null;
@@ -20,14 +20,14 @@ public class Client {
 
     public Client(
     	int clientId,
-    	int programId,
+    	int gymId,
     	String fullName,
     	String gender,
     	String age,
     	String serviceAddress) {
     	
         this.clientId = clientId;
-        this.programId = programId;
+        this.gymId = gymId;
         this.fullName = fullName;
         this.gender = gender;
         this.age = age;
@@ -38,8 +38,8 @@ public class Client {
 		return clientId;
 	}
 
-	public int getProgramId() {
-		return programId;
+	public int getGymId() {
+		return gymId;
 	}
 
 	public String getFullName() {
@@ -57,5 +57,9 @@ public class Client {
 	public String getServiceAddress() {
         return serviceAddress;
     }
+
+	public void setServiceAddress(String address) {
+		serviceAddress = address;
+	}
 
 }

@@ -1,10 +1,10 @@
 package se.magnus.microservices.core.gym.persistence;
 
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.*;
 
-import java.util.List;
+import java.util.Optional;
 
 public interface GymRepository extends PagingAndSortingRepository<GymEntity, String> {
 
-    List<GymEntity> findByGymId(int gymId);
+    Optional<GymEntity> findByGymId(int gymId);
 }

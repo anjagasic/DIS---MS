@@ -5,7 +5,7 @@ public class Employee {
 	private final int gymId;
     private final int employeeId;
     private final String fullName;
-    private final String serviceAddress;
+    private String serviceAddress;
 
     public Employee() {
     	gymId = 0;
@@ -41,5 +41,9 @@ public class Employee {
 	public String getServiceAddress() {
         return serviceAddress;
     }
+
+	public void setServiceAddress(String address) {
+		serviceAddress = address;
+	}
 
 }

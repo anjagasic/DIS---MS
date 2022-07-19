@@ -7,14 +7,21 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit4.SpringRunner;
 import se.magnus.microservices.core.gym.persistence.GymEntity;
 import se.magnus.microservices.core.gym.persistence.GymRepository;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
+import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.*;
+import static org.springframework.data.domain.Sort.Direction.ASC;
 
 @RunWith(SpringRunner.class)
 @DataMongoTest
@@ -36,7 +43,7 @@ public class PersistenceTests {
     }
 
     @Test
-    public void createEmployee() {
+    public void createGym() {
 
         GymEntity newEntity = new GymEntity(1, 2, "Addiction", "Novi Sad");
         repository.save(newEntity);
@@ -48,7 +55,7 @@ public class PersistenceTests {
     }
 
     @Test
-    public void updateEmployee() {
+    public void updateGym() {
         savedGymEntity.setName("name2");
         repository.save(savedGymEntity);
 
@@ -58,17 +65,17 @@ public class PersistenceTests {
     }
 
     @Test
-    public void deleteEmployee() {
+    public void deleteGym() {
         repository.delete(savedGymEntity);
         assertFalse(repository.existsById(savedGymEntity.getId()));
     }
 
     @Test
-    public void getByInsuranceCompanyId() {
-        List<GymEntity> entityList = repository.findByGymId(savedGymEntity.getGymId());
+    public void getByEmployeeId() {
+        Optional<GymEntity> entityList = repository.findByGymId(savedGymEntity.getGymId());
 
-        MatcherAssert.assertThat(entityList, hasSize(1));
-        assertEqualsEmployee(savedGymEntity, entityList.get(0));
+        assertTrue(entityList.isPresent());
+        assertEqualsEmployee(savedGymEntity, entityList.get());
     }
 
     @Test
@@ -90,6 +97,29 @@ public class PersistenceTests {
         GymEntity updatedEntity = repository.findById(savedGymEntity.getId()).get();
         assertEquals(2, updatedEntity.getVersion());
         assertEquals("name2", updatedEntity.getName());
+    }
+
+    @Test
+    public void paging() {
+
+        repository.deleteAll();
+
+        List<GymEntity> newInsuranceCompanies = rangeClosed(1001, 1010)
+                .mapToObj(i -> new GymEntity(i, i,"name"+i, "address"+i))
+                .collect(Collectors.toList());
+        repository.saveAll(newInsuranceCompanies);
+
+        Pageable nextPage = PageRequest.of(0, 4, ASC, "gymId");
+        nextPage = testNextPage(nextPage, "[1001, 1002, 1003, 1004]", true);
+        nextPage = testNextPage(nextPage, "[1005, 1006, 1007, 1008]", true);
+        nextPage = testNextPage(nextPage, "[1009, 1010]", false);
+    }
+
+    private Pageable testNextPage(Pageable nextPage, String gymIds, boolean expectsNextPage) {
+        Page<GymEntity> gymPage = repository.findAll(nextPage);
+        assertEquals(gymIds, gymPage.getContent().stream().map(p -> p.getGymId()).collect(Collectors.toList()).toString());
+        assertEquals(expectsNextPage, gymPage.hasNext());
+        return gymPage.nextPageable();
     }
 
     private void assertEqualsEmployee(GymEntity expectedEntity, GymEntity actualEntity) {
