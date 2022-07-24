@@ -9,4 +9,5 @@ public interface ProgramRepository extends CrudRepository<ProgramEntity, Integer
 
     @Transactional(readOnly = true)
     List<ProgramEntity> findByGymId(int gymId);
+    ProgramEntity findByProgramId(int programId);
 }

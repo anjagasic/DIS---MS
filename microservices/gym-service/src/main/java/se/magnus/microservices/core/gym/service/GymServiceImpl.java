@@ -35,7 +35,7 @@ public class GymServiceImpl implements GymService {
         if (gymId < 1)
             throw new InvalidInputException("Invalid gymId: " + gymId);
 
-        GymEntity entity = repository.findByGymId(gymId).orElseThrow(() -> new NotFoundException("No meal found for gymId: " + gymId));
+        GymEntity entity = repository.findByGymId(gymId).orElseThrow(() -> new NotFoundException("No gym found for gymId: " + gymId));
 
         Gym response = mapper.entityToApi(entity);
         response.setServiceAddress(serviceUtil.getServiceAddress());

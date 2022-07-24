@@ -1,8 +1,8 @@
 package se.magnus.api.core.client;
 
 public class Client {
-	
-	private final int clientId;
+
+    private final int clientId;
     private final int gymId;
     private final String fullName;
     private final String gender;
@@ -10,22 +10,22 @@ public class Client {
     private String serviceAddress;
 
     public Client() {
-		clientId = 0;
-    	gymId = 0;
-    	fullName = null;
-    	gender = null;
-    	age = null;
+        gymId = 0;
+        clientId = 0;
+        fullName = null;
+        gender = null;
+        age = null;
         serviceAddress = null;
     }
 
     public Client(
-    	int clientId,
-    	int gymId,
-    	String fullName,
-    	String gender,
-    	String age,
-    	String serviceAddress) {
-    	
+            int gymId,
+            int clientId,
+            String fullName,
+            String gender,
+            String age,
+            String serviceAddress) {
+
         this.clientId = clientId;
         this.gymId = gymId;
         this.fullName = fullName;
@@ -34,32 +34,32 @@ public class Client {
         this.serviceAddress = serviceAddress;
     }
 
-	public int getClientId() {
-		return clientId;
-	}
+    public int getClientId() {
+        return clientId;
+    }
 
-	public int getGymId() {
-		return gymId;
-	}
+    public int getGymId() {
+        return gymId;
+    }
 
-	public String getFullName() {
-		return fullName;
-	}
-	
-	public String getGender() {
-		return gender;
-	}
-	
-	public String getAge() {
-		return age;
-	}
+    public String getFullName() {
+        return fullName;
+    }
 
-	public String getServiceAddress() {
+    public String getGender() {
+        return gender;
+    }
+
+    public String getAge() {
+        return age;
+    }
+
+    public String getServiceAddress() {
         return serviceAddress;
     }
 
-	public void setServiceAddress(String address) {
-		serviceAddress = address;
-	}
+    public void setServiceAddress(String address) {
+        serviceAddress = address;
+    }
 
 }
