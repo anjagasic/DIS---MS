@@ -5,6 +5,10 @@ public class EmployeeSummary {
     private final String fullName;
     private final Integer employeeId;
 
+    public EmployeeSummary() {
+        this.fullName = null;
+        this.employeeId = 0;
+    }
 
     public EmployeeSummary(Integer employeeId, String fullName) {
         this.fullName = fullName;

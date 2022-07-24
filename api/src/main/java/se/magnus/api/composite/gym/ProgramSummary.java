@@ -8,6 +8,11 @@ public class ProgramSummary {
     private final String name;
     private final Integer programId;
 
+    public ProgramSummary() {
+        this.name = null;
+        this.programId = 0;
+    }
+
     public ProgramSummary(Integer programId, String name) {
         this.name = name;
         this.programId = programId;

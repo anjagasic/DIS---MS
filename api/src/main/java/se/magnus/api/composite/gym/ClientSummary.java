@@ -7,6 +7,12 @@ public class ClientSummary {
     private final String gender;
     private final String age;
 
+    public ClientSummary() {
+        this.clientId = 0;
+        this.fullName = null;
+        this.gender = null;
+        this.age = null;
+    }
 
     public ClientSummary(
             int clientId,
@@ -14,7 +20,6 @@ public class ClientSummary {
             String gender,
             String age) {
         this.clientId = clientId;
-
         this.fullName = fullName;
         this.gender = gender;
         this.age = age;

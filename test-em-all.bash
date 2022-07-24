@@ -79,64 +79,60 @@ function waitForService() {
     done
 }
 
-#function recreateComposite() {
-#    local mealId=$1
-#    local composite=$2
-#
-#    assertCurl 200 "curl -X DELETE http://$HOST:$PORT/meal-composite/${mealId} -s"
-#    curl -X POST http://$HOST:$PORT/meal-composite -H "Content-Type: application/json" --data "$composite"
-#}
-#
-#function setupTestdata() {
-#int commentId, String author, String subject
-#    body=\
-#'{"mealId":1,"mealName":"meal 1","category":"category 1", "reciepeDescription":"description", "calories":1, "prepartionTime":"1h",
-#  "serves":1,
-#    "ingredients":[
-#        {"ingredientId":1,"name":"ing name 1","amount":1,"unitOfMeasure":"kg"},
-#        {"ingredientId":2,"name":"ing name 2","amount":1,"unitOfMeasure":"kg"},
-#        {"ingredientId":3,"name":"ing name 3","amount":1,"unitOfMeasure":"kg"}
-#    ], "recommendedDrinks":[
-#        {"recommendedDrinkId":1,"drinkName":"drink name 1","nonalcoholic":true},
-#        {"recommendedDrinkId":1,"drinkName":"drink name 1","nonalcoholic":true},
-#        {"recommendedDrinkId":1,"drinkName":"drink name 1","nonalcoholic":true}
-#    ], "comments":[
-#        {"commentId":1,"author":"author 1","subject":"subject 1"},
-#        {"commentId":2,"author":"author 2","subject":"subject 2"},
-#       {"commentId":3,"author":"author 3","subject":"subject 3"}
-#    ]}'
-#    recreateComposite 1 "$body"
-#
-#    body=\
-#'{"mealId":113,"mealName":"meal 113","category":"category 113", "reciepeDescription":"description", "calories":113, "prepartionTime":"1h",
-#  "serves":113,
-#    "ingredients":[
-#        {"ingredientId":1,"name":"ing name 1","amount":1,"unitOfMeasure":"kg"},
-#        {"ingredientId":2,"name":"ing name 2","amount":1,"unitOfMeasure":"kg"},
-#        {"ingredientId":3,"name":"ing name 3","amount":1,"unitOfMeasure":"kg"}
-#    ]}'
-#    recreateComposite 113 "$body"
-#
-#    body=\
-#'{"mealId":213,"mealName":"meal 213","category":"category 213", "reciepeDescription":"description", "calories":213, "prepartionTime":"1h",
-#  "serves":213,
-#    "recommendedDrinks":[
-#        {"recommendedDrinkId":1,"drinkName":"drink name 1","nonalcoholic":true},
-#        {"recommendedDrinkId":1,"drinkName":"drink name 1","nonalcoholic":true},
-#        {"recommendedDrinkId":1,"drinkName":"drink name 1","nonalcoholic":true}
-#    ]}'
-#    recreateComposite 213 "$body"
-#
-#    body=\
-#'{"mealId":313,"mealName":"meal 313","category":"category 313", "reciepeDescription":"description", "calories":313, "prepartionTime":"1h",
-#    "serves":313,
-#      "comments":[
-#            {"commentId":1,"author":"author 1","subject":"subject 1"},
-#            {"commentId":2,"author":"author 2","subject":"subject 2"},
-#            {"commentId":3,"author":"author 3","subject":"subject 3"}
-#      ]}'
-#      recreateComposite 313 "$body"
-#}
+function recreateComposite() {
+    local gymId=$1
+    local composite=$2
+
+    assertCurl 200 "curl -X DELETE http://$HOST:$PORT/gym-composite/${gymId} -s"
+    curl -X POST http://$HOST:$PORT/gym-composite -H "Content-Type: application/json" --data "$composite"
+}
+
+function setupTestdata() {
+int commentId, String author, String subject
+    body=\
+'{"gymId":1,"name":"name 1","address":"address 1",
+    "clients":[
+        {"clientId":1,"fullName":"name 1","gender":"Female","age":"25"},
+        {"clientId":2,"fullName":"name 2","gender":"Male","age":"25"},
+        {"clientId":3,"fullName":"name 3","gender":"Female","age":"15"}
+    ], "employees":[
+        {"employeeId":1,"fullName":"name 1"},
+        {"employeeId":2,"fullName":"name 2"},
+        {"employeeId":3,"fullName":"name 3"}
+    ], "programs":[
+        {"programId":1,"name":"name 1"},
+        {"programId":2,"name":"name 2"},
+        {"programId":3,"name":"name 3"}
+    ]}'
+    recreateComposite 1 "$body"
+
+    body=\
+'{"gymId":113,"name":"name 113","address":"address 113"
+    "clients":[
+        {"clientId":1,"fullName":"name 1","gender":"Female","age":"25"},
+        {"clientId":2,"fullName":"name 2","gender":"Male","age":"25"},
+        {"clientId":3,"fullName":"name 3","gender":"Female","age":"15"}
+    ]}'
+    recreateComposite 113 "$body"
+
+    body=\
+'{"gym":213,"name":"name 213","address":"address 213"
+    "employees":[
+         {"programId":1,"name":"name 1"},
+         {"programId":2,"name":"name 2"},
+         {"programId":3,"name":"name 3"}
+    ]}'
+    recreateComposite 213 "$body"
+
+    body=\
+'{"gymId":313,"name":"name 313","address":"address 313"
+      "programs":[
+            {"commentId":1,"author":"author 1","subject":"subject 1"},
+            {"commentId":2,"author":"author 2","subject":"subject 2"},
+            {"commentId":3,"author":"author 3","subject":"subject 3"}
+      ]}'
+      recreateComposite 313 "$body"
+}
 
 set -e
 
@@ -154,9 +150,8 @@ then
     docker-compose up -d
 fi
 
-waitForService http://$HOST:${PORT}/gym-composite/1
-
-#setupTestdata
+waitForService curl -X DELETE http://$HOST:$PORT/product-composite/13
+setupTestdata
 
 # Verify that a normal request works, expect three programs, three clients and three employees
 assertCurl 200 "curl http://$HOST:$PORT/gym-composite/1 -s"
