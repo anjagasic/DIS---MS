@@ -1,6 +1,5 @@
 package se.magnus.microservices.core.gym;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,16 +10,16 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mongodb.core.ReactiveMongoOperations;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.index.IndexOperations;
 import org.springframework.data.mongodb.core.index.IndexResolver;
 import org.springframework.data.mongodb.core.index.MongoPersistentEntityIndexResolver;
-import org.springframework.data.mongodb.core.index.ReactiveIndexOperations;
 import org.springframework.data.mongodb.core.mapping.MongoPersistentEntity;
 import org.springframework.data.mongodb.core.mapping.MongoPersistentProperty;
 import se.magnus.microservices.core.gym.persistence.GymEntity;
 
 @SpringBootApplication
-@ComponentScan("se.magnus")
+@ComponentScan("se.magnus.*")
 public class GymServiceApplication {
 
 	private static final Logger LOG = LoggerFactory.getLogger(GymServiceApplication.class);
@@ -34,7 +33,7 @@ public class GymServiceApplication {
 	}
 
 	@Autowired
-	ReactiveMongoOperations mongoTemplate;
+	MongoOperations mongoTemplate;
 
 	@EventListener(ContextRefreshedEvent.class)
 	public void initIndicesAfterStartup() {
@@ -42,7 +41,7 @@ public class GymServiceApplication {
 		MappingContext<? extends MongoPersistentEntity<?>, MongoPersistentProperty> mappingContext = mongoTemplate.getConverter().getMappingContext();
 		IndexResolver resolver = new MongoPersistentEntityIndexResolver(mappingContext);
 
-		ReactiveIndexOperations indexOps = mongoTemplate.indexOps(GymEntity.class);
-		resolver.resolveIndexFor(GymEntity.class).forEach(e -> indexOps.ensureIndex(e).block());
+		IndexOperations indexOps = mongoTemplate.indexOps(GymEntity.class);
+		resolver.resolveIndexFor(GymEntity.class).forEach(e -> indexOps.ensureIndex(e));
 	}
 }

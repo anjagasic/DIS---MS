@@ -1,6 +1,8 @@
 package se.magnus.microservices.composite.gym;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.http.HttpStatus;
+import se.magnus.api.composite.gym.GymAggregate;
 import se.magnus.api.core.client.Client;
 import se.magnus.api.core.employee.Employee;
 import se.magnus.api.core.gym.Gym;
@@ -12,7 +14,9 @@ import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.when;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
+import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static reactor.core.publisher.Mono.just;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -56,14 +60,7 @@ class GymCompositeServiceApplicationTests {
 
 	@Test
 	public void getGymById() {
-
-		client.get()
-				.uri("/gym-composite/" + GYM_ID_OK)
-				.accept(APPLICATION_JSON)
-				.exchange()
-				.expectStatus().isOk()
-				.expectHeader().contentType(APPLICATION_JSON)
-				.expectBody()
+		getAndVerifyGym(GYM_ID_OK, OK)
 				.jsonPath("$.gymId").isEqualTo(GYM_ID_OK)
 				.jsonPath("$.clients.length()").isEqualTo(1)
 				.jsonPath("$.employees.length()").isEqualTo(1)
@@ -72,30 +69,41 @@ class GymCompositeServiceApplicationTests {
 
 	@Test
 	public void getGymNotFound() {
-
-		client.get()
-				.uri("/gym-composite/" + GYM_ID_NOT_FOUND)
-				.accept(APPLICATION_JSON)
-				.exchange()
-				.expectStatus().isNotFound()
-				.expectHeader().contentType(APPLICATION_JSON)
-				.expectBody()
+		getAndVerifyGym(GYM_ID_NOT_FOUND, NOT_FOUND)
 				.jsonPath("$.path").isEqualTo("/gym-composite/" + GYM_ID_NOT_FOUND)
 				.jsonPath("$.message").isEqualTo("NOT FOUND: " + GYM_ID_NOT_FOUND);
 	}
 
 	@Test
 	public void getGymInvalidInput() {
-
-		client.get()
-				.uri("/gym-composite/" + GYM_ID_INVALID)
-				.accept(APPLICATION_JSON)
-				.exchange()
-				.expectStatus().isEqualTo(UNPROCESSABLE_ENTITY)
-				.expectHeader().contentType(APPLICATION_JSON)
-				.expectBody()
+		getAndVerifyGym(GYM_ID_INVALID, UNPROCESSABLE_ENTITY)
 				.jsonPath("$.path").isEqualTo("/gym-composite/" + GYM_ID_INVALID)
 				.jsonPath("$.message").isEqualTo("INVALID: " + GYM_ID_INVALID);
+	}
+
+	private WebTestClient.BodyContentSpec getAndVerifyGym(int gymId, HttpStatus expectedStatus) {
+		return client.get()
+				.uri("/gym-composite/" + gymId)
+				.accept(APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus)
+				.expectHeader().contentType(APPLICATION_JSON)
+				.expectBody();
+	}
+
+	private void postAndVerifyGym(GymAggregate compositeGym, HttpStatus expectedStatus) {
+		client.post()
+				.uri("/gym-composite")
+				.body(just(compositeGym), GymAggregate.class)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus);
+	}
+
+	private void deleteAndVerifyGym(int gymId, HttpStatus expectedStatus) {
+		client.delete()
+				.uri("/gym-composite/" + gymId)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus);
 	}
 
 }

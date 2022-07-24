@@ -1,5 +1,7 @@
 package se.magnus.microservices.composite.gym.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.magnus.api.composite.gym.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,8 +18,10 @@ import java.util.stream.Collectors;
 @RestController
 public class GymCompositeServiceImpl implements GymCompositeService {
 
-	private final ServiceUtil serviceUtil;
-    private  GymCompositeIntegration integration;
+    private static final Logger LOG = LoggerFactory.getLogger(GymCompositeServiceImpl.class);
+
+    private final ServiceUtil serviceUtil;
+    private GymCompositeIntegration integration;
 
     @Autowired
     public GymCompositeServiceImpl(ServiceUtil serviceUtil, GymCompositeIntegration integration) {
@@ -25,9 +29,9 @@ public class GymCompositeServiceImpl implements GymCompositeService {
         this.integration = integration;
     }
 
-	@Override
-	public GymAggregate getGym(int gymId) {
-		Gym gym = integration.getGym(gymId);
+    @Override
+    public GymAggregate getGym(int gymId) {
+        Gym gym = integration.getGym(gymId);
         if (gym == null) throw new NotFoundException("No gym found for gymId: " + gymId);
 
         List<Program> programs = integration.getPrograms(gymId);
@@ -36,10 +40,12 @@ public class GymCompositeServiceImpl implements GymCompositeService {
 
         List<Employee> employees = integration.getEmployees(gymId);
 
-        return createGymAggregate(gym, programs, clients, employees, serviceUtil.getServiceAddress());
-	}
+        LOG.debug("getCompositeGym: aggregate entity found for gymId: {}", gymId);
 
-	private GymAggregate createGymAggregate(Gym gym, List<Program> programs, List<Client> clients, List<Employee> employees, String serviceAddress) {
+        return createGymAggregate(gym, programs, clients, employees, serviceUtil.getServiceAddress());
+    }
+
+    private GymAggregate createGymAggregate(Gym gym, List<Program> programs, List<Client> clients, List<Employee> employees, String serviceAddress) {
 
         // 1. Setup gym info
         int gymId = gym.getGymId();
@@ -48,21 +54,21 @@ public class GymCompositeServiceImpl implements GymCompositeService {
 
         // 2. Copy summary program info, if available
         List<ProgramSummary> programSummaries = (programs == null) ? null :
-        	programs.stream()
-                .map(r -> new ProgramSummary(r.getProgramId(), r.getName()))
-                .collect(Collectors.toList());
+                programs.stream()
+                        .map(r -> new ProgramSummary(r.getProgramId(), r.getName()))
+                        .collect(Collectors.toList());
 
         // 3. Copy summary client info, if available
-        List<ClientSummary> clientSummaries = (clients == null)  ? null :
-        	clients.stream()
-                .map(r -> new ClientSummary(r.getClientId(), r.getFullName(), r.getGender(), r.getAge()))
-                .collect(Collectors.toList());
+        List<ClientSummary> clientSummaries = (clients == null) ? null :
+                clients.stream()
+                        .map(r -> new ClientSummary(r.getClientId(), r.getFullName(), r.getGender(), r.getAge()))
+                        .collect(Collectors.toList());
 
         // 4. Copy summary employee info, if available
-        List<EmployeeSummary> employeeSummaries = (employees == null)  ? null :
-        	employees.stream()
-                .map(r -> new EmployeeSummary(r.getEmployeeId(), r.getFullName()))
-                .collect(Collectors.toList());
+        List<EmployeeSummary> employeeSummaries = (employees == null) ? null :
+                employees.stream()
+                        .map(r -> new EmployeeSummary(r.getEmployeeId(), r.getFullName()))
+                        .collect(Collectors.toList());
 
         // 5. Create info regarding the involved microservices addresses
         String gymAddress = gym.getServiceAddress();
@@ -74,4 +80,54 @@ public class GymCompositeServiceImpl implements GymCompositeService {
         return new GymAggregate(gymId, name, address, programSummaries, clientSummaries, employeeSummaries, serviceAddresses);
     }
 
+    @Override
+    public void createCompositeGym(GymAggregate body) {
+        try {
+
+            LOG.debug("createCompositeGym: creates a new composite entity for gymId: {}", body.getGymId());
+
+            Gym gym = new Gym(body.getGymId(), body.getName(), body.getAddress(), null);
+            integration.createGym(gym);
+
+            if (body.getClients() != null) {
+                body.getClients().forEach(clientSummary -> {
+                    Client client = new Client(body.getGymId(), clientSummary.getClientId(), clientSummary.getFullName(),
+                            clientSummary.getGender(), clientSummary.getAge(), null);
+                    integration.createClient(client);
+                });
+            }
+
+            if (body.getEmployees() != null) {
+                body.getEmployees().forEach(employeeSummary -> {
+                    Employee employee = new Employee(body.getGymId(), employeeSummary.getEmployeeId(), employeeSummary.getFullName(), null);
+                    integration.createEmployee(employee);
+                });
+            }
+
+            if (body.getPrograms() != null) {
+                body.getPrograms().forEach(programSummary -> {
+                    Program program = new Program(body.getGymId(), programSummary.getProgramId(), programSummary.getName(), null);
+                    integration.createProgram(program);
+                });
+            }
+
+            LOG.debug("createCompositeGym: composite entites created for gymId: {}", body.getGymId());
+        } catch (RuntimeException re) {
+            LOG.warn("createCompositeProduct failed", re);
+            throw re;
+        }
+
+    }
+
+    @Override
+    public void deleteCompositeGym(int gymId) {
+        LOG.debug("deleteCompositeGym: Deletes a gym aggregate for gymId: {}", gymId);
+
+        integration.deleteGym(gymId);
+        integration.deleteClients(gymId);
+        integration.deleteEmployees(gymId);
+        integration.deletePrograms(gymId);
+
+        LOG.debug("getCompositeGym: aggregate entities deleted for gymId: {}", gymId);
+    }
 }

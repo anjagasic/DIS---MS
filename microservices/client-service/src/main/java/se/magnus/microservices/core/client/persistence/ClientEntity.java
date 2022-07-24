@@ -5,7 +5,7 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "gyms")
+@Document(collection = "clients")
 @CompoundIndex(name = "gym-cli-id", unique = true, def = "{'gymId': 1, 'clientId' : 1}")
 public class ClientEntity {
 

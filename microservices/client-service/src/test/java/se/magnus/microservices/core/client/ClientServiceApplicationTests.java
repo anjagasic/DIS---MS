@@ -18,7 +18,7 @@ import static org.junit.Assert.*;
 import static reactor.core.publisher.Mono.just;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment=RANDOM_PORT)
+@SpringBootTest(webEnvironment=RANDOM_PORT, properties = {"spring.data.mongodb.port: 0"})
 class ClientServiceApplicationTests {
 
 	@Autowired
@@ -96,7 +96,7 @@ class ClientServiceApplicationTests {
 	public void postClient() {
 		int gymId = 1;
 		int clientId = 1;
-		postAndVerifyClient(gymId, clientId, OK); //TODO 
+		postAndVerifyClient(gymId, clientId, OK); //TODO
 		assertNotNull(repository.findByClientId(clientId));
 	}
 

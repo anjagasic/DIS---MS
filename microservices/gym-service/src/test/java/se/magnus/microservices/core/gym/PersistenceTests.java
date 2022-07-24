@@ -1,6 +1,5 @@
 package se.magnus.microservices.core.gym;
 
-import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,7 +18,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.stream.IntStream.rangeClosed;
-import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.*;
 import static org.springframework.data.domain.Sort.Direction.ASC;
 
@@ -45,7 +43,7 @@ public class PersistenceTests {
     @Test
     public void createGym() {
 
-        GymEntity newEntity = new GymEntity(1, 2, "Addiction", "Novi Sad");
+        GymEntity newEntity = new GymEntity(2, 2, "Addiction", "Novi Sad");
         repository.save(newEntity);
 
         GymEntity foundEntity = repository.findById(newEntity.getId()).get();
