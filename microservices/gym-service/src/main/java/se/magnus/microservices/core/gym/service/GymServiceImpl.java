@@ -1,5 +1,6 @@
 package se.magnus.microservices.core.gym.service;
 
+import reactor.core.publisher.Mono;
 import com.mongodb.DuplicateKeyException;
 import se.magnus.api.core.gym.GymService;
 import org.slf4j.Logger;
@@ -12,6 +13,8 @@ import se.magnus.microservices.core.gym.persistence.GymRepository;
 import se.magnus.util.exceptions.InvalidInputException;
 import se.magnus.util.exceptions.NotFoundException;
 import se.magnus.util.http.ServiceUtil;
+
+import static reactor.core.publisher.Mono.error;
 
 @RestController
 public class GymServiceImpl implements GymService {
@@ -31,38 +34,41 @@ public class GymServiceImpl implements GymService {
 
 
     @Override
-    public Gym getGym(int gymId) {
+    public Mono<Gym> getGym(int gymId) {
         if (gymId < 1)
             throw new InvalidInputException("Invalid gymId: " + gymId);
 
-        GymEntity entity = repository.findByGymId(gymId).orElseThrow(() -> new NotFoundException("No gym found for gymId: " + gymId));
-
-        Gym response = mapper.entityToApi(entity);
-        response.setServiceAddress(serviceUtil.getServiceAddress());
-
-        LOG.debug("getMeal: found gymId: {}", response.getGymId());
-
-        return response;
+        return repository.findByGymId(gymId)
+                .switchIfEmpty(error(new NotFoundException("No gym found for gymId: " + gymId)))
+                .log()
+                .map(e -> mapper.entityToApi(e))
+                .map(e -> {
+                    e.setServiceAddress(serviceUtil.getServiceAddress());
+                    return e;
+                });
     }
 
     @Override
     public Gym createGym(Gym body) {
-        try {
-            GymEntity entity = mapper.apiToEntity(body);
-            GymEntity newEntity = repository.save(entity);
+        if (body.getGymId() < 1) throw new InvalidInputException("Invalid gymId: " + body.getGymId());
 
-            LOG.debug("createGym: entity created for gymId: {}", body.getGymId());
-            return mapper.entityToApi(newEntity);
+        GymEntity entity = mapper.apiToEntity(body);
+        Mono<Gym> newEntity = repository.save(entity)
+                .log()
+                .onErrorMap(
+                        DuplicateKeyException.class,
+                        ex -> new InvalidInputException("Duplicate key, Gym Id: " + body.getGymId()))
+                .map(e -> mapper.entityToApi(e));
 
-        } catch (DuplicateKeyException dke) {
-            throw new InvalidInputException("Duplicate key, gym Id: " + body.getGymId());
-        }
+        return newEntity.block();
     }
 
     @Override
     public void deleteGym(int gymId) {
+        if (gymId < 1) throw new InvalidInputException("Invalid gymId: " + gymId);
+
         LOG.debug("deleteGym: tries to delete an entity with gymId: {}", gymId);
-        repository.findByGymId(gymId).ifPresent(repository::delete);
+        repository.findByGymId(gymId).log().map(e -> repository.delete(e)).flatMap(e -> e).block();
 
     }
 }

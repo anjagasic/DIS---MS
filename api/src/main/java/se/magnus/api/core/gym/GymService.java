@@ -1,6 +1,7 @@
 package se.magnus.api.core.gym;
 
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 public interface GymService {
 
@@ -13,7 +14,7 @@ public interface GymService {
     @GetMapping(
         value    = "/gym/{gymId}",
         produces = "application/json")
-     Gym getGym(@PathVariable int gymId);
+     Mono<Gym> getGym(@PathVariable int gymId);
 
     /**
      * Sample usage:

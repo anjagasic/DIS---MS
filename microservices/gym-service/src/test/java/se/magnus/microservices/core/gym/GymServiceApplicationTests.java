@@ -14,8 +14,7 @@ import se.magnus.microservices.core.gym.persistence.GymRepository;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.junit.Assert.*;
-import static reactor.core.publisher.Mono.just;
+import static org.junit.jupiter.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -27,40 +26,33 @@ class GymServiceApplicationTests {
 
     @BeforeEach
     public void setupDb() {
-        repository.deleteAll();
+        repository.deleteAll().block();
     }
 
     @Test
     public void getGymById() {
-
         int gymId = 1;
+        assertNull(repository.findByGymId(gymId).block());
+        assertEquals(0, (long)repository.count().block());
 
-        postAndVerifyGym(gymId, OK);
+        sendCreateGymEvent(gymId);
 
-        assertTrue(repository.findByGymId(gymId).isPresent());
-    }
+        assertNotNull(repository.findByGymId(gymId).block());
+        assertEquals(1, (long)repository.count().block());
 
-    @Test
-    public void postGym() {
-
-        int gymId = 1;
-        postAndVerifyGym(gymId, OK);
-        assertTrue(repository.findByGymId(gymId).isPresent());
+        getAndVerifyGym(gymId, OK).jsonPath("$.gymId").isEqualTo(gymId);
     }
 
     @Test
     public void deleteGym() {
-
         int gymId = 1;
+        sendCreateGymEvent(gymId);
+        assertNotNull(repository.findByGymId(gymId).block());
 
+        sendDeleteGymEvent(gymId);
+        assertNull(repository.findByGymId(gymId).block());
 
-        postAndVerifyGym(gymId, OK);
-        assertTrue(repository.findByGymId(gymId).isPresent());
-
-        deleteAndVerifyGym(gymId, OK);
-        assertFalse(repository.findByGymId(gymId).isPresent());
-
-        deleteAndVerifyGym(gymId, OK);
+        sendDeleteGymEvent(gymId);
     }
 
     @Test
@@ -95,6 +87,10 @@ class GymServiceApplicationTests {
                 .jsonPath("$.message").isEqualTo("Invalid gymId: " + gymIdInvalid);
     }
 
+    private WebTestClient.BodyContentSpec getAndVerifyGym(int gymId, HttpStatus expectedStatus) {
+        return getAndVerifyGym("/" + gymId, expectedStatus);
+    }
+
     private WebTestClient.BodyContentSpec getAndVerifyGym(String gymIdPath, HttpStatus expectedStatus) {
         return client.get()
                 .uri("/gym/" + gymIdPath)
@@ -105,24 +101,15 @@ class GymServiceApplicationTests {
                 .expectBody();
     }
 
-    private WebTestClient.BodyContentSpec postAndVerifyGym(int gymId, HttpStatus expectedStatus) {
-        Gym gym = new Gym(gymId,  "name 1", "address 1", "SA");
-        return client.post()
-                .uri("/gym"
-                ).body(just(gym), Gym.class)
-                .accept(APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isEqualTo(expectedStatus)
-                .expectHeader().contentType(APPLICATION_JSON)
-                .expectBody();
+    private void sendCreateGymEvent(int gymId) {
+        Gym gym = new Gym(gymId, "Name " + gymId, "address", "SA");
+
+        //Event<Integer, Meal> event = new Event(CREATE, mealId, meal);
+        //input.send(new GenericMessage<>(event));
     }
 
-    private WebTestClient.BodyContentSpec deleteAndVerifyGym(int gymId, HttpStatus expectedStatus) {
-        return client.delete()
-                .uri("/gym/" + gymId)
-                .accept(APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isEqualTo(expectedStatus)
-                .expectBody();
+    private void sendDeleteGymEvent(int gymId) {
+        //Event<Integer, Meal> event = new Event(DELETE, mealId, null);
+        //input.send(new GenericMessage<>(event));
     }
 }

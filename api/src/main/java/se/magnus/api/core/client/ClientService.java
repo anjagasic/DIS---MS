@@ -1,6 +1,7 @@
 package se.magnus.api.core.client;
 
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ public interface ClientService {
     @GetMapping(
         value    = "/client",
         produces = "application/json")
-    List<Client> getClients(@RequestParam(value = "gymId", required = true) int gymId);
+    Flux<Client> getClients(@RequestParam(value = "gymId", required = true) int gymId);
 
     /**
      * Sample usage:

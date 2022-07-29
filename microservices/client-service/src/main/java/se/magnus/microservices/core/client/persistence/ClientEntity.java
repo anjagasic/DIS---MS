@@ -61,7 +61,7 @@ public class ClientEntity {
         return clientId;
     }
 
-    public void setEmployeeId(int clientId) {
+    public void setClientId(int clientId) {
         this.clientId = clientId;
     }
 

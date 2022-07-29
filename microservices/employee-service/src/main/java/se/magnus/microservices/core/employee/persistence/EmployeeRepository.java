@@ -1,12 +1,9 @@
 package se.magnus.microservices.core.employee.persistence;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Flux;
 
-import java.util.List;
+public interface EmployeeRepository extends ReactiveCrudRepository<EmployeeEntity, String> {
 
-
-public interface EmployeeRepository extends CrudRepository<EmployeeEntity, String> {
-
-    List<EmployeeEntity> findByGymId(int gymId);
-    EmployeeEntity findByEmployeeId(int employeeId);
+    Flux<EmployeeEntity> findByGymId(int gymId);
 }

@@ -29,32 +29,31 @@ public class PersistenceTests {
 
     @Before
     public void setupDb() {
-        repository.deleteAll();
+        repository.deleteAll().block();
 
         EmployeeEntity entity = new EmployeeEntity(1, 1, "name1");
-        savedEmployeeEntity = repository.save(entity);
+        savedEmployeeEntity = repository.save(entity).block();
 
         assertEqualsEmployee(entity, savedEmployeeEntity);
     }
 
     @Test
     public void createEmployee() {
-
         EmployeeEntity newEntity = new EmployeeEntity(1, 2, "name2");
-        repository.save(newEntity);
+        repository.save(newEntity).block();
 
-        EmployeeEntity foundEntity = repository.findById(newEntity.getId()).get();
+        EmployeeEntity foundEntity = repository.findById(newEntity.getId()).block();
         assertEqualsEmployee(newEntity, foundEntity);
 
-        assertEquals(2, repository.count());
+        assertEquals(2, repository.count().block());
     }
 
     @Test
     public void updateEmployee() {
         savedEmployeeEntity.setFullName("name2");
-        repository.save(savedEmployeeEntity);
+        repository.save(savedEmployeeEntity).block();
 
-        EmployeeEntity foundEntity = repository.findById(savedEmployeeEntity.getId()).get();
+        EmployeeEntity foundEntity = repository.findById(savedEmployeeEntity.getId()).block();
         assertEquals(2, foundEntity.getVersion());
         assertEquals("name2", foundEntity.getFullName());
     }
@@ -62,12 +61,12 @@ public class PersistenceTests {
     @Test
     public void deleteEmployee() {
         repository.delete(savedEmployeeEntity);
-        assertFalse(repository.existsById(savedEmployeeEntity.getId()));
+        assertFalse(repository.existsById(savedEmployeeEntity.getId()).block());
     }
 
     @Test
     public void getByInsuranceCompanyId() {
-        List<EmployeeEntity> entityList = repository.findByGymId(savedEmployeeEntity.getGymId());
+        List<EmployeeEntity> entityList = repository.findByGymId(savedEmployeeEntity.getGymId()).collectList().block();
 
         MatcherAssert.assertThat(entityList, hasSize(1));
         assertEqualsEmployee(savedEmployeeEntity, entityList.get(0));
@@ -76,20 +75,20 @@ public class PersistenceTests {
     @Test
     public void optimisticLockError() {
 
-        EmployeeEntity entity1 = repository.findById(savedEmployeeEntity.getId()).get();
-        EmployeeEntity entity2 = repository.findById(savedEmployeeEntity.getId()).get();
+        EmployeeEntity entity1 = repository.findById(savedEmployeeEntity.getId()).block();
+        EmployeeEntity entity2 = repository.findById(savedEmployeeEntity.getId()).block();
 
         entity1.setFullName("name2");
-        repository.save(entity1);
+        repository.save(entity1).block();
 
         try {
             entity2.setFullName("name3");
-            repository.save(entity2);
+            repository.save(entity2).block();
 
             fail("Expected an OptimisticLockingFailureException");
         } catch (OptimisticLockingFailureException e) {
         }
-        EmployeeEntity updatedEntity = repository.findById(savedEmployeeEntity.getId()).get();
+        EmployeeEntity updatedEntity = repository.findById(savedEmployeeEntity.getId()).block();
         assertEquals(2, updatedEntity.getVersion());
         assertEquals("name2", updatedEntity.getFullName());
     }

@@ -5,17 +5,23 @@ import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.http.HttpStatus;
+import org.springframework.integration.channel.AbstractMessageChannel;
+import org.springframework.messaging.support.GenericMessage;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import se.magnus.api.core.employee.*;
+import se.magnus.api.core.gym.Gym;
+import se.magnus.api.event.Event;
 import se.magnus.microservices.core.employee.persistence.EmployeeRepository;
 
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.junit.Assert.*;
-import static reactor.core.publisher.Mono.just;
+import static se.magnus.api.event.Event.Type.CREATE;
+import static se.magnus.api.event.Event.Type.DELETE;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT, properties = {"spring.data.mongodb.port: 0"})
@@ -26,21 +32,30 @@ class EmployeeServiceApplicationTests {
     @Autowired
     private EmployeeRepository repository;
 
+    @Autowired
+    private Sink channels;
+
+    private AbstractMessageChannel input = null;
+
     @BeforeEach
     public void setupDb() {
-        repository.deleteAll();
+        input = (AbstractMessageChannel) channels.input();
+        repository.deleteAll().block();
     }
 
     @Test
     public void getEmployeesByGymId() {
-
         int gymId = 1;
 
-        postAndVerifyEmployee(gymId, 1, OK);
-        postAndVerifyEmployee(gymId, 2, OK);
-        postAndVerifyEmployee(gymId, 3, OK);
+        sendCreateEmployeeEvent(gymId, 1);
+        sendCreateEmployeeEvent(gymId, 2);
+        sendCreateEmployeeEvent(gymId, 3);
 
-        assertEquals(3, repository.findByGymId(gymId).size());
+        assertEquals(3, (long) repository.findByGymId(gymId).count().block());
+        postAndVerifyEmployee(gymId, OK)
+                .jsonPath("$.length()").isEqualTo(3)
+                .jsonPath("$[2].gymId").isEqualTo(gymId)
+                .jsonPath("$[2].employeeId").isEqualTo(3);
     }
 
     @Test
@@ -49,13 +64,13 @@ class EmployeeServiceApplicationTests {
         int gymId = 1;
         int employeeId = 1;
 
-        postAndVerifyEmployee(gymId, employeeId, OK);
-        assertEquals(1, repository.findByGymId(gymId).size());
+        sendCreateEmployeeEvent(gymId, employeeId);
+        assertEquals(1, (long) repository.findByGymId(gymId).count().block());
 
-        deleteAndVerifyEmployeesByInsuranceCompanyId(gymId, OK);
-        assertEquals(0, repository.findByGymId(gymId).size());
+        sendDeleteEmployeeEvent(gymId);
+        assertEquals(0, (long)repository.findByGymId(gymId).count().block());
 
-        deleteAndVerifyEmployeesByInsuranceCompanyId(gymId, OK);
+        sendDeleteEmployeeEvent(gymId);
     }
 
     @Test
@@ -91,14 +106,6 @@ class EmployeeServiceApplicationTests {
                 .jsonPath("$.message").isEqualTo("Invalid gymId: " + gymIdInvalid);
     }
 
-    @Test
-    public void postEmployee() {
-        int gymId = 1;
-        int employeeId = 1;
-        postAndVerifyEmployee(gymId, employeeId, OK);
-        assertNotNull(repository.findByEmployeeId(employeeId));
-    }
-
     private WebTestClient.BodyContentSpec getAndVerifyEmployeesByGymId(String gymIdQuery, HttpStatus expectedStatus) {
         return client.get()
                 .uri("/employee" + gymIdQuery)
@@ -109,24 +116,19 @@ class EmployeeServiceApplicationTests {
                 .expectBody();
     }
 
-    private WebTestClient.BodyContentSpec postAndVerifyEmployee(int gymId, int employeeId, HttpStatus expectedStatus) {
-        Employee employee = new Employee(gymId, employeeId, "name 1", "SA");
-        return client.post()
-                .uri("/employee")
-                .body(just(employee), Employee.class)
-                .accept(APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isEqualTo(expectedStatus)
-                .expectHeader().contentType(APPLICATION_JSON)
-                .expectBody();
+    private WebTestClient.BodyContentSpec postAndVerifyEmployee(int gymId, HttpStatus expectedStatus) {
+        return getAndVerifyEmployeesByGymId("?gymId=" + gymId, expectedStatus);
     }
 
-    private WebTestClient.BodyContentSpec deleteAndVerifyEmployeesByInsuranceCompanyId(int gymId, HttpStatus expectedStatus) {
-        return client.delete()
-                .uri("/employee?gymId=" + gymId)
-                .accept(APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isEqualTo(expectedStatus).
-                expectBody();
+    private void sendCreateEmployeeEvent(int gymId, int employeeId) {
+        Employee employee = new Employee(gymId, employeeId, "name " + employeeId, "SA");
+        Event<Integer, Gym> event = new Event(CREATE, gymId, employee);
+        input.send(new GenericMessage<>(event));
     }
+
+    private void sendDeleteEmployeeEvent(int gymId) {
+        Event<Integer, Gym> event = new Event(DELETE, gymId, null);
+        input.send(new GenericMessage<>(event));
+    }
+
 }

@@ -1,6 +1,7 @@
 package se.magnus.api.core.employee;
 
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ public interface EmployeeService {
     @GetMapping(
         value    = "/employee",
         produces = "application/json")
-    List<Employee> getEmployees(@RequestParam(value = "gymId", required = true) int gymId);
+    Flux<Employee> getEmployees(@RequestParam(value = "gymId", required = true) int gymId);
 
     /**
      * Sample usage:

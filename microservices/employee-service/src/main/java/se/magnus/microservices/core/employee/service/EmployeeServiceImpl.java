@@ -1,6 +1,9 @@
 package se.magnus.microservices.core.employee.service;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import se.magnus.api.core.client.Client;
 import se.magnus.api.core.employee.Employee;
 import org.slf4j.Logger;
@@ -33,36 +36,38 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public List<Employee> getEmployees(int gymId) {
+    public Flux<Employee> getEmployees(int gymId) {
 
         if (gymId < 1) throw new InvalidInputException("Invalid gymId: " + gymId);
 
-        List<EmployeeEntity> entityList = repository.findByGymId(gymId);
-        List<Employee> list = mapper.entityListToApiList(entityList);
-        list.forEach(e -> e.setServiceAddress(serviceUtil.getServiceAddress()));
-
-        LOG.debug("getEmployees: response size: {}", list.size());
-
-        return list;
+        return repository.findByGymId(gymId)
+                .log()
+                .map(e -> mapper.entityToApi(e))
+                .map(e -> {
+                    e.setServiceAddress(serviceUtil.getServiceAddress());
+                    return e;
+                });
     }
 
     @Override
     public Employee createEmployee(Employee body) {
-        try {
-            EmployeeEntity entity = mapper.apiToEntity(body);
-            EmployeeEntity newEntity = repository.save(entity);
+        if (body.getGymId() < 1) throw new InvalidInputException("Invalid gymId: " + body.getGymId());
+        EmployeeEntity entity = mapper.apiToEntity(body);
+        Mono<Employee> newEntity = repository.save(entity)
+                .log()
+                .onErrorMap(
+                        DuplicateKeyException.class,
+                        ex -> new InvalidInputException("Duplicate key, Gym Id: " + body.getGymId() + ", Employee Id:" + body.getEmployeeId()))
+                .map(e -> mapper.entityToApi(e));
 
-            LOG.debug("createEmployee: created a employee entity: {}/{}", body.getGymId(), body.getEmployeeId());
-            return mapper.entityToApi(newEntity);
-
-        } catch (DataIntegrityViolationException dke) {
-            throw new InvalidInputException("Duplicate key, gym Id: " + body.getGymId() + ", employee Id:" + body.getEmployeeId());
-        }
+        return newEntity.block();
     }
 
     @Override
     public void deleteEmployees(int gymId) {
+        if (gymId < 1) throw new InvalidInputException("Invalid gymId: " + gymId);
+
         LOG.debug("deleteEmployees: tries to delete employee for the gym with gymId: {}", gymId);
-        repository.deleteAll(repository.findByGymId(gymId));
+        repository.deleteAll(repository.findByGymId(gymId)).block();
     }
 }

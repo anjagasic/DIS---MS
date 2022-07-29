@@ -1,10 +1,12 @@
 package se.magnus.microservices.composite.gym.services;
 
+import io.swagger.models.auth.In;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.magnus.api.composite.gym.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 import se.magnus.api.core.gym.Gym;
 import se.magnus.api.core.program.Program;
 import se.magnus.api.core.client.Client;
@@ -30,19 +32,15 @@ public class GymCompositeServiceImpl implements GymCompositeService {
     }
 
     @Override
-    public GymAggregate getGym(int gymId) {
-        Gym gym = integration.getGym(gymId);
-        if (gym == null) throw new NotFoundException("No gym found for gymId: " + gymId);
-
-        List<Program> programs = integration.getPrograms(gymId);
-
-        List<Client> clients = integration.getClients(gymId);
-
-        List<Employee> employees = integration.getEmployees(gymId);
-
-        LOG.debug("getCompositeGym: aggregate entity found for gymId: {}", gymId);
-
-        return createGymAggregate(gym, programs, clients, employees, serviceUtil.getServiceAddress());
+    public Mono<GymAggregate> getCompositeGym(int gymId) {
+        return Mono.zip(
+                        values -> createGymAggregate((Gym) values[0], (List<Program>) values[1], (List<Client>) values[2], (List<Employee>) values[3], serviceUtil.getServiceAddress()),
+                        integration.getGym(gymId),
+                        integration.getPrograms(gymId).collectList(),
+                        integration.getClients(gymId).collectList(),
+                        integration.getEmployees(gymId).collectList())
+                .doOnError(ex -> LOG.warn("getCompositeGym failed: {}", ex.toString()))
+                .log();
     }
 
     private GymAggregate createGymAggregate(Gym gym, List<Program> programs, List<Client> clients, List<Employee> employees, String serviceAddress) {

@@ -23,7 +23,7 @@ public class GymEntity {
     public GymEntity() {
     }
 
-    public GymEntity(int gymId, int programId, String name, String address) {
+    public GymEntity(int gymId, String name, String address) {
         this.gymId = gymId;
         this.name = name;
         this.address = address;

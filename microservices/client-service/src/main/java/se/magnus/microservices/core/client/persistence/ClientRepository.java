@@ -1,12 +1,9 @@
 package se.magnus.microservices.core.client.persistence;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Flux;
 
-import java.util.List;
+public interface ClientRepository extends ReactiveCrudRepository<ClientEntity, String> {
 
-
-public interface ClientRepository extends CrudRepository<ClientEntity, String> {
-
-    List<ClientEntity> findByGymId(int gymId);
-    ClientEntity findByClientId(int clientId);
+    Flux<ClientEntity> findByGymId(int gymId);
 }

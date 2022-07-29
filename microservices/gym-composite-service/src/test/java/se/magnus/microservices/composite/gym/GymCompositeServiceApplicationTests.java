@@ -2,7 +2,6 @@ package se.magnus.microservices.composite.gym;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.http.HttpStatus;
-import se.magnus.api.composite.gym.GymAggregate;
 import se.magnus.api.core.client.Client;
 import se.magnus.api.core.employee.Employee;
 import se.magnus.api.core.gym.Gym;
@@ -16,13 +15,14 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static reactor.core.publisher.Mono.just;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import se.magnus.util.exceptions.InvalidInputException;
 import se.magnus.util.exceptions.NotFoundException;
@@ -45,17 +45,21 @@ class GymCompositeServiceApplicationTests {
 	public void setUp() {
 
 		when(compositeIntegration.getGym(GYM_ID_OK)).
-				thenReturn(new Gym(GYM_ID_OK, "Test Name", "Test address", "mock-address"));
+				thenReturn(Mono.just(new Gym(GYM_ID_OK, "Test Name", "Test address", "mock-address")));
 		when(compositeIntegration.getClients(GYM_ID_OK)).
-				thenReturn(singletonList(new Client(GYM_ID_OK, 1, "Test full name", "Test gender", "Test age", "mock address")));
+				thenReturn(Flux.fromIterable(singletonList(new Client(GYM_ID_OK, 1, "Test full name", "Test gender", "Test age", "mock address"))));
 		when(compositeIntegration.getEmployees(GYM_ID_OK)).
-				thenReturn(singletonList(new Employee(GYM_ID_OK, 1, "Test full name", "mock address")));
+				thenReturn(Flux.fromIterable(singletonList(new Employee(GYM_ID_OK, 1, "Test full name", "mock address"))));
 		when(compositeIntegration.getPrograms(GYM_ID_OK)).
-				thenReturn(singletonList(new Program(GYM_ID_OK, 1, "Test name", "mock address")));
+				thenReturn(Flux.fromIterable(singletonList(new Program(GYM_ID_OK, 1, "Test name", "mock address"))));
 
 		when(compositeIntegration.getGym(GYM_ID_NOT_FOUND)).thenThrow(new NotFoundException("NOT FOUND: " + GYM_ID_NOT_FOUND));
 
 		when(compositeIntegration.getGym(GYM_ID_INVALID)).thenThrow(new InvalidInputException("INVALID: " + GYM_ID_INVALID));
+	}
+
+	@Test
+	public void contextLoads() {
 	}
 
 	@Test
@@ -89,21 +93,6 @@ class GymCompositeServiceApplicationTests {
 				.expectStatus().isEqualTo(expectedStatus)
 				.expectHeader().contentType(APPLICATION_JSON)
 				.expectBody();
-	}
-
-	private void postAndVerifyGym(GymAggregate compositeGym, HttpStatus expectedStatus) {
-		client.post()
-				.uri("/gym-composite")
-				.body(just(compositeGym), GymAggregate.class)
-				.exchange()
-				.expectStatus().isEqualTo(expectedStatus);
-	}
-
-	private void deleteAndVerifyGym(int gymId, HttpStatus expectedStatus) {
-		client.delete()
-				.uri("/gym-composite/" + gymId)
-				.exchange()
-				.expectStatus().isEqualTo(expectedStatus);
 	}
 
 }

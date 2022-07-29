@@ -1,8 +1,7 @@
 package se.magnus.api.core.program;
 
-import java.util.List;
-
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 public interface ProgramService {
 
@@ -15,7 +14,7 @@ public interface ProgramService {
     @GetMapping(
         value    = "/program",
         produces = "application/json")
-    List<Program> getPrograms(@RequestParam(value = "gymId", required = true) int gymId);
+    Flux<Program> getPrograms(@RequestParam(value = "gymId", required = true) int gymId);
 
 
     /**

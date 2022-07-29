@@ -1,10 +1,9 @@
 package se.magnus.microservices.core.gym.persistence;
 
-import org.springframework.data.repository.*;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Mono;
 
-import java.util.Optional;
+public interface GymRepository extends ReactiveCrudRepository<GymEntity, String> {
 
-public interface GymRepository extends PagingAndSortingRepository<GymEntity, String> {
-
-    Optional<GymEntity> findByGymId(int gymId);
+    Mono<GymEntity> findByGymId(int gymId);
 }

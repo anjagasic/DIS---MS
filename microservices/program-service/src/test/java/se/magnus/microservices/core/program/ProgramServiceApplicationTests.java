@@ -8,26 +8,39 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import se.magnus.api.core.gym.Gym;
 import se.magnus.api.core.program.*;
+import se.magnus.api.event.Event;
 import se.magnus.microservices.core.program.persistence.ProgramRepository;
 
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.junit.Assert.*;
-import static reactor.core.publisher.Mono.just;
+import static se.magnus.api.event.Event.Type.CREATE;
+import static se.magnus.api.event.Event.Type.DELETE;
+
+import org.springframework.cloud.stream.messaging.Sink;
+import org.springframework.integration.channel.AbstractMessageChannel;
+import org.springframework.messaging.support.GenericMessage;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment=RANDOM_PORT, properties = {"spring.datasource.url=jdbc:h2:mem:review-db"})
+@SpringBootTest(webEnvironment = RANDOM_PORT, properties = {"spring.datasource.url=jdbc:h2:mem:review-db"})
 class ProgramServiceApplicationTests {
 
     @Autowired
     private WebTestClient client;
     @Autowired
     private ProgramRepository repository;
+    @Autowired
+    private Sink channels;
+    private AbstractMessageChannel input = null;
+
 
     @BeforeEach
     public void setupDb() {
+        input = (AbstractMessageChannel) channels.input();
+
         repository.deleteAll();
     }
 
@@ -36,11 +49,18 @@ class ProgramServiceApplicationTests {
 
         int gymId = 1;
 
-        postAndVerifyProgram(gymId, 1, OK);
-        postAndVerifyProgram(gymId, 2, OK);
-        postAndVerifyProgram(gymId, 3, OK);
+        assertEquals(0, repository.findByGymId(gymId).size());
+
+        sendCreateProgramEvent(gymId, 1);
+        sendCreateProgramEvent(gymId, 2);
+        sendCreateProgramEvent(gymId, 3);
 
         assertEquals(3, repository.findByGymId(gymId).size());
+
+        postAndVerifyProgram(gymId, OK)
+                .jsonPath("$.length()").isEqualTo(3)
+                .jsonPath("$[2].gymId").isEqualTo(gymId)
+                .jsonPath("$[2].programId").isEqualTo(3);
     }
 
     @Test
@@ -49,13 +69,13 @@ class ProgramServiceApplicationTests {
         int gymId = 1;
         int programId = 1;
 
-        postAndVerifyProgram(gymId, programId, OK);
+        sendCreateProgramEvent(gymId, programId);
         assertEquals(1, repository.findByGymId(gymId).size());
 
-        deleteAndVerifyProgramsByGymId(gymId, OK);
+        sendDeleteProgramEvent(gymId);
         assertEquals(0, repository.findByGymId(gymId).size());
 
-        deleteAndVerifyProgramsByGymId(gymId, OK);
+        sendDeleteProgramEvent(gymId);
     }
 
     @Test
@@ -91,14 +111,6 @@ class ProgramServiceApplicationTests {
                 .jsonPath("$.message").isEqualTo("Invalid gymId: " + gymIdInvalid);
     }
 
-    @Test
-    public void postProgram() {
-        int gymId = 1;
-        int programId = 1;
-        postAndVerifyProgram(gymId, programId, OK);
-        assertNotNull(repository.findByProgramId(programId));
-    }
-
     private WebTestClient.BodyContentSpec getAndVerifyProgramsByGymId(String gymIdQuery, HttpStatus expectedStatus) {
         return client.get()
                 .uri("/program" + gymIdQuery)
@@ -109,24 +121,19 @@ class ProgramServiceApplicationTests {
                 .expectBody();
     }
 
-    private WebTestClient.BodyContentSpec postAndVerifyProgram(int gymId, int programId, HttpStatus expectedStatus) {
-        Program program = new Program(gymId, programId, "name 1", "SA");
-        return client.post()
-                .uri("/program")
-                .body(just(program), Program.class)
-                .accept(APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isEqualTo(expectedStatus)
-                .expectHeader().contentType(APPLICATION_JSON)
-                .expectBody();
+    private WebTestClient.BodyContentSpec postAndVerifyProgram(int gymId, HttpStatus expectedStatus) {
+        return getAndVerifyProgramsByGymId("?gymId=" + gymId, expectedStatus);
     }
 
-    private WebTestClient.BodyContentSpec deleteAndVerifyProgramsByGymId(int gymId, HttpStatus expectedStatus) {
-        return client.delete()
-                .uri("/program?gymId=" + gymId)
-                .accept(APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isEqualTo(expectedStatus).
-                expectBody();
+    private void sendCreateProgramEvent(int gymId, int programId) {
+        Program program = new Program(gymId, programId, "Name " + programId, "SA");
+        Event<Integer, Gym> event = new Event(CREATE, gymId, program);
+        input.send(new GenericMessage<>(event));
     }
+
+    private void sendDeleteProgramEvent(int gymId) {
+        Event<Integer, Program> event = new Event(DELETE, gymId, null);
+        input.send(new GenericMessage<>(event));
+    }
+
 }
