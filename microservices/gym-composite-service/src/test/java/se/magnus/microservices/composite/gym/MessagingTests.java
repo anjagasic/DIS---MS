@@ -41,10 +41,6 @@ import static se.magnus.microservices.composite.gym.IsSameEvent.sameEventExceptC
 
 public class MessagingTests {
 
-    private static final int PRODUCT_ID_OK = 1;
-    private static final int PRODUCT_ID_NOT_FOUND = 2;
-    private static final int PRODUCT_ID_INVALID = 3;
-
     @Autowired
     private WebTestClient client;
 
@@ -95,11 +91,11 @@ public class MessagingTests {
 
         postAndVerifyGym(composite, OK);
 
-        // Assert one create product event queued up
+        // Assert one create gym event queued up
         assertEquals(1, queueGyms.size());
 
-        Event<Integer, Gym> expectedProductEvent = new Event(CREATE, composite.getGymId(), new Gym(composite.getGymId(), composite.getName(), composite.getAddress(), null));
-        assertThat(queueGyms, receivesPayloadThat(sameEventExceptCreatedAt(expectedProductEvent)));
+        Event<Integer, Gym> expectedGymEvent = new Event(CREATE, composite.getGymId(), new Gym(composite.getGymId(), composite.getName(), composite.getAddress(), null));
+        assertThat(queueGyms, receivesPayloadThat(sameEventExceptCreatedAt(expectedGymEvent)));
 
         // Assert one create client event queued up
         assertEquals(1, queueClients.size());
@@ -128,7 +124,7 @@ public class MessagingTests {
 
         deleteAndVerifyGym(1, OK);
 
-        // Assert one delete product event queued up
+        // Assert one delete gym event queued up
         assertEquals(1, queueGyms.size());
 
         Event<Integer, Gym> expectedEvent = new Event(DELETE, 1, null);

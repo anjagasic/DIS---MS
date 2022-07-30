@@ -150,7 +150,7 @@ then
     docker-compose up -d
 fi
 
-waitForService curl -X DELETE http://$HOST:$PORT/product-composite/13
+waitForService curl -X DELETE http://$HOST:$PORT/gym-composite/13
 setupTestdata
 
 # Verify that a normal request works, expect three programs, three clients and three employees

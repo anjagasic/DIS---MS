@@ -111,7 +111,7 @@ public class GymCompositeServiceImpl implements GymCompositeService {
 
             LOG.debug("createCompositeGym: composite entites created for gymId: {}", body.getGymId());
         } catch (RuntimeException re) {
-            LOG.warn("createCompositeProduct failed", re);
+            LOG.warn("createCompositeGym failed", re);
             throw re;
         }
 

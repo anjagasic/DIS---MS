@@ -39,17 +39,8 @@ public class ProgramServiceImpl implements ProgramService {
 
     @Override
     public Flux<Program> getPrograms(int gymId) {
-
         if (gymId < 1) throw new InvalidInputException("Invalid gymId: " + gymId);
-
-        List<ProgramEntity> entityList = repository.findByGymId(gymId);
-        List<Program> list = mapper.entityListToApiList(entityList);
-        list.forEach(e -> e.setServiceAddress(serviceUtil.getServiceAddress()));
-
-        LOG.debug("getClients: response size: {}", list.size());
-
         LOG.info("Will get programs for gym with id={}", gymId);
-
         return asyncFlux(() -> Flux.fromIterable(getByGymId(gymId))).log(null, FINE);
     }
 

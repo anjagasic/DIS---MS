@@ -10,8 +10,8 @@ spring.data.mongodb:
     defaultBinder: rabbit
     default.contentType: application/json
     bindings.input:
-      destination: products
-      group: productsGroup
+      destination: gyms
+      group: gymsGroup
 
   spring.cloud.stream.bindings.input.consumer:
     maxAttempts: 3

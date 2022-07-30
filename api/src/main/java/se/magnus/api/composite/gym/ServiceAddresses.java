@@ -15,12 +15,12 @@ public class ServiceAddresses {
         rec = null;
     }
 
-    public ServiceAddresses(String compositeAddress, String mealAddress, String ingredientAddress, String commentAddress, String recommendedDrinkAddress) {
+    public ServiceAddresses(String compositeAddress, String mealAddress, String ingredientAddress, String commentAddress, String address) {
         this.cmp = compositeAddress;
         this.mea = mealAddress;
         this.ing = ingredientAddress;
         this.com = commentAddress;
-        this.rec = recommendedDrinkAddress;
+        this.rec = address;
     }
 
     public String getCmp() {
