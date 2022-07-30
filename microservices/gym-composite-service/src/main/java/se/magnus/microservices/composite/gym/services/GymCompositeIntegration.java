@@ -44,13 +44,14 @@ public class GymCompositeIntegration implements GymService, ProgramService, Clie
 
     private static final Logger LOG = LoggerFactory.getLogger(GymCompositeIntegration.class);
 
-    private final WebClient webClient;
-    private final ObjectMapper mapper;
+    private final String gymServiceUrl = "http://gym";
+    private final String clientServiceUrl = "http://client";
+    private final String employeeServiceUrl = "http://employee";
+    private final String programServiceUrl = "http://program";
 
-    private final String gymServiceUrl;
-    private final String programServiceUrl;
-    private final String clientServiceUrl;
-    private final String employeeServiceUrl;
+    private final WebClient.Builder webClientBuilder;
+    private WebClient webClient;
+    private final ObjectMapper mapper;
 
     private MessageSources messageSources;
 
@@ -76,7 +77,7 @@ public class GymCompositeIntegration implements GymService, ProgramService, Clie
 
     @Autowired
     public GymCompositeIntegration(
-            WebClient.Builder webClient,
+            WebClient.Builder webClientBuilder,
             MessageSources messageSources,
             ObjectMapper mapper,
             @Value("${app.gym-service.host}") String gymServiceHost,
@@ -89,20 +90,15 @@ public class GymCompositeIntegration implements GymService, ProgramService, Clie
             @Value("${app.employee-service.port}") int employeeCreditServicePort
     ) {
         this.messageSources = messageSources;
-        this.webClient = webClient.build();
+        this.webClientBuilder = webClientBuilder;
         this.mapper = mapper;
-
-        gymServiceUrl = "http://" + gymServiceHost + ":" + gymServicePort;
-        programServiceUrl = "http://" + programServiceHost + ":" + programServicePort;
-        clientServiceUrl = "http://" + clientServiceHost + ":" + clientServicePort;
-        employeeServiceUrl = "http://" + employeeCreditServiceHost + ":" + employeeCreditServicePort;
     }
 
     public Mono<Gym> getGym(int gymId) {
         String url = gymServiceUrl + "/gym/" + gymId;
         LOG.debug("Will call getGym API on URL: {}", url);
 
-        return webClient.get().uri(url).retrieve()
+        return getWebClient().get().uri(url).retrieve()
                 .bodyToMono(Gym.class)
                 .log()
                 .onErrorMap(
@@ -127,7 +123,7 @@ public class GymCompositeIntegration implements GymService, ProgramService, Clie
         LOG.debug("Will call getPrograms API on URL: {}", url);
 
         // Return an empty result if something goes wrong to make it possible for the composite service to return partial responses
-        return webClient.get().uri(url).retrieve()
+        return getWebClient().get().uri(url).retrieve()
                 .bodyToFlux(Program.class)
                 .log().onErrorResume(error -> empty());
     }
@@ -146,7 +142,7 @@ public class GymCompositeIntegration implements GymService, ProgramService, Clie
     public Flux<Client> getClients(int gymId) {
         String url = clientServiceUrl + "/client?gymId=" + gymId;
         LOG.debug("Will call getClients API on URL: {}", url);
-        return webClient.get().uri(url).retrieve()
+        return getWebClient().get().uri(url).retrieve()
                 .bodyToFlux(Client.class).log().onErrorResume(error -> empty());
     }
 
@@ -165,7 +161,7 @@ public class GymCompositeIntegration implements GymService, ProgramService, Clie
         String url = employeeServiceUrl + "/employee?gymId=" + gymId;
 
         LOG.debug("Will call getEmployees API on URL: {}", url);
-        return webClient.get().uri(url).retrieve()
+        return getWebClient().get().uri(url).retrieve()
                 .bodyToFlux(Employee.class).log().onErrorResume(error -> empty());
     }
 
@@ -199,10 +195,17 @@ public class GymCompositeIntegration implements GymService, ProgramService, Clie
     private Mono<Health> getHealth(String url) {
         url += "/actuator/health";
         LOG.debug("Will call the Health API on URL: {}", url);
-        return webClient.get().uri(url).retrieve().bodyToMono(String.class)
+        return getWebClient().get().uri(url).retrieve().bodyToMono(String.class)
                 .map(s -> new Health.Builder().up().build())
                 .onErrorResume(ex -> Mono.just(new Health.Builder().down(ex).build()))
                 .log();
+    }
+
+    private WebClient getWebClient() {
+        if (webClient == null) {
+            webClient = webClientBuilder.build();
+        }
+        return webClient;
     }
 
 

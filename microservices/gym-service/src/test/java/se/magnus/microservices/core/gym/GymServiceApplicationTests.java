@@ -17,7 +17,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.junit.jupiter.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+@SpringBootTest(webEnvironment = RANDOM_PORT,
+        properties = {"eureka.client.enabled=false", "spring.data.mongodb.port: 0"})
 class GymServiceApplicationTests {
     @Autowired
     private WebTestClient client;

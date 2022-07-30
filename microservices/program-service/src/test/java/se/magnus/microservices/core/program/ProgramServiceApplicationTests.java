@@ -25,7 +25,11 @@ import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.messaging.support.GenericMessage;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT, properties = {"spring.datasource.url=jdbc:h2:mem:program-db"})
+@SpringBootTest(webEnvironment = RANDOM_PORT, properties = {
+        "logging.level.se.magnus=DEBUG",
+        "eureka.client.enabled=false",
+        "spring.datasource.url=jdbc:h2:mem:program-db"
+})
 class ProgramServiceApplicationTests {
 
     @Autowired
