@@ -10,6 +10,11 @@
 #
 : ${HOST=localhost}
 : ${PORT=8081}
+: ${GYM_ID_CLIS_EMPS_PROGS=2}
+: ${GYML_ID_NOT_FOUND=14}
+: ${GYM_ID_NO_CLIS=114}
+: ${GYM_ID_NO_EPMS=214}
+: ${GYM_ID_NO_PROGS=314}
 
 function assertCurl() {
 
@@ -61,6 +66,31 @@ function testUrl() {
     fi;
 }
 
+function testCompositeCreated() {
+
+    # Expect that the Gym Composite for gymId $GYM_ID_CLIS_EMPS_PROGS has been created with three clients, three employees and three programs
+    if ! assertCurl 200 "curl http://$HOST:$PORT/gym-composite/$GYM_ID_CLIS_EMPS_PROGS -s"
+    then
+        echo -n "FAIL"
+        return 1
+    fi
+
+    set +e
+    assertEqual "$GYM_ID_CLIS_EMPS_PROGS" $(echo $RESPONSE | jq .gymId)
+    if [ "$?" -eq "1" ] ; then return 1; fi
+
+    assertEqual 3 $(echo $RESPONSE | jq ".clients | length")
+    if [ "$?" -eq "1" ] ; then return 1; fi
+
+    assertEqual 3 $(echo $RESPONSE | jq ".employees | length")
+    if [ "$?" -eq "1" ] ; then return 1; fi
+
+    assertEqual 3 $(echo $RESPONSE | jq ".programs | length")
+    if [ "$?" -eq "1" ] ; then return 1; fi
+
+    set -e
+}
+
 function waitForService() {
     url=$@
     echo -n "Wait for: $url... "
@@ -79,6 +109,28 @@ function waitForService() {
     done
 }
 
+function waitForMessageProcessing() {
+    echo "Wait for messages to be processed... "
+
+    # Give background processing some time to complete...
+    sleep 1
+
+    n=0
+    until testCompositeCreated
+    do
+        n=$((n + 1))
+        if [[ $n == 40 ]]
+        then
+            echo " Give up"
+            exit 1
+        else
+            sleep 6
+            echo -n ", retry #$n "
+        fi
+    done
+    echo "All messages are now processed!"
+}
+
 function recreateComposite() {
     local gymId=$1
     local composite=$2
@@ -88,50 +140,67 @@ function recreateComposite() {
 }
 
 function setupTestdata() {
-int commentId, String author, String subject
-    body=\
-'{"gymId":1,"name":"name 1","address":"address 1",
-    "clients":[
-        {"clientId":1,"fullName":"name 1","gender":"Female","age":"25"},
-        {"clientId":2,"fullName":"name 2","gender":"Male","age":"25"},
-        {"clientId":3,"fullName":"name 3","gender":"Female","age":"15"}
-    ], "employees":[
-        {"employeeId":1,"fullName":"name 1"},
-        {"employeeId":2,"fullName":"name 2"},
-        {"employeeId":3,"fullName":"name 3"}
-    ], "programs":[
-        {"programId":1,"name":"name 1"},
-        {"programId":2,"name":"name 2"},
-        {"programId":3,"name":"name 3"}
-    ]}'
-    recreateComposite 1 "$body"
-
-    body=\
-'{"gymId":113,"name":"name 113","address":"address 113"
-    "clients":[
-        {"clientId":1,"fullName":"name 1","gender":"Female","age":"25"},
-        {"clientId":2,"fullName":"name 2","gender":"Male","age":"25"},
-        {"clientId":3,"fullName":"name 3","gender":"Female","age":"15"}
-    ]}'
-    recreateComposite 113 "$body"
-
-    body=\
-'{"gym":213,"name":"name 213","address":"address 213"
-    "employees":[
-         {"programId":1,"name":"name 1"},
-         {"programId":2,"name":"name 2"},
-         {"programId":3,"name":"name 3"}
-    ]}'
-    recreateComposite 213 "$body"
-
-    body=\
-'{"gymId":313,"name":"name 313","address":"address 313"
-      "programs":[
-            {"commentId":1,"author":"author 1","subject":"subject 1"},
-            {"commentId":2,"author":"author 2","subject":"subject 2"},
-            {"commentId":3,"author":"author 3","subject":"subject 3"}
+       body="{\"gymId\":$GYM_ID_NO_CLIS"
+        body+=\
+  '{"gymId":1,"name":"name 1","address":"address 1",
+     "employees":[
+          {"employeeId":1,"fullName":"name 1"},
+          {"employeeId":2,"fullName":"name 2"},
+          {"employeeId":3,"fullName":"name 3"}
+      ], "programs":[
+          {"programId":1,"name":"name 1"},
+          {"programId":2,"name":"name 2"},
+          {"programId":3,"name":"name 3"}
       ]}'
-      recreateComposite 313 "$body"
+       recreateComposite "$GYM_ID_NO_CLIS" "$body"
+
+
+           body="{\"gymId\":$GYM_ID_NO_PROGS"
+           body+=\
+    '{"gymId":1,"name":"name 1","address":"address 1",
+        "clients":[
+            {"clientId":1,"fullName":"name 1","gender":"Female","age":"25"},
+            {"clientId":2,"fullName":"name 2","gender":"Male","age":"25"},
+            {"clientId":3,"fullName":"name 3","gender":"Female","age":"15"}
+        ], "employees":[
+            {"employeeId":1,"fullName":"name 1"},
+            {"employeeId":2,"fullName":"name 2"},
+            {"employeeId":3,"fullName":"name 3"}
+        ]'
+          recreateComposite "$GYM_ID_NO_PROGS" "$body"
+
+        body="{\"gymId\":$GYM_ID_NO_EPMS"
+        body+=\
+    '{"gymId":1,"name":"name 1","address":"address 1",
+        "clients":[
+            {"clientId":1,"fullName":"name 1","gender":"Female","age":"25"},
+            {"clientId":2,"fullName":"name 2","gender":"Male","age":"25"},
+            {"clientId":3,"fullName":"name 3","gender":"Female","age":"15"}
+        ], "programs":[
+            {"programId":1,"name":"name 1"},
+            {"programId":2,"name":"name 2"},
+            {"programId":3,"name":"name 3"}
+        ]}'
+       recreateComposite "$GYM_ID_NO_EPMS" "$body"
+
+        body="{\"gymId\":$GYM_ID_CLIS_EMPS_PROGS"
+        body+=\
+   '{"gymId":1,"name":"name 1","address":"address 1",
+       "clients":[
+           {"clientId":1,"fullName":"name 1","gender":"Female","age":"25"},
+           {"clientId":2,"fullName":"name 2","gender":"Male","age":"25"},
+           {"clientId":3,"fullName":"name 3","gender":"Female","age":"15"}
+       ], "employees":[
+           {"employeeId":1,"fullName":"name 1"},
+           {"employeeId":2,"fullName":"name 2"},
+           {"employeeId":3,"fullName":"name 3"}
+       ], "programs":[
+           {"programId":1,"name":"name 1"},
+           {"programId":2,"name":"name 2"},
+           {"programId":3,"name":"name 3"}
+       ]}'
+
+       recreateComposite "$GYM_ID_CLIS_EMPS_PROGS" "$body"
 }
 
 set -e
@@ -150,32 +219,40 @@ then
     docker-compose up -d
 fi
 
-waitForService curl -X DELETE http://$HOST:$PORT/gym-composite/13
+waitForService curl -X DELETE http://$HOST:$PORT/actuator/health
 setupTestdata
+waitForMessageProcessing
 
 # Verify that a normal request works, expect three programs, three clients and three employees
-assertCurl 200 "curl http://$HOST:$PORT/gym-composite/1 -s"
-assertEqual 1 $(echo $RESPONSE | jq .gymId)
+assertCurl 200 "curl http://$HOST:$PORT/gym-composite/$GYM_ID_CLIS_EMPS_PROGS -s"
+assertEqual "$GYM_ID_CLIS_EMPS_PROGS" $(echo $RESPONSE | jq .gymId)
 assertEqual 3 $(echo $RESPONSE | jq ".programs | length")
 assertEqual 3 $(echo $RESPONSE | jq ".clients | length")
 assertEqual 3 $(echo $RESPONSE | jq ".employees | length")
 
 # Verify that a 404 (Not Found) error is returned for a non existing gymId (13)
-assertCurl 404 "curl http://$HOST:$PORT/gym-composite/13 -s"
+assertCurl 404 "curl http://$HOST:$PORT/gym-composite/$GYML_ID_NOT_FOUND -s"
 
-# Verify that no programs, clients and employees are returned for gymId 113
-assertCurl 200 "curl http://$HOST:$PORT/gym-composite/113 -s"
-assertEqual 113 $(echo $RESPONSE | jq .mealId)
-assertEqual 0 $(echo $RESPONSE | jq ".programs | length")
+# Verify that no clients are returned for gymId $GYM_ID_NO_CLIS
+assertCurl 200 "curl http://$HOST:$PORT/gym-composite/$GYM_ID_NO_CLIS -s"
+assertEqual "$GYM_ID_NO_CLIS" $(echo $RESPONSE | jq .gymId)
 assertEqual 0 $(echo $RESPONSE | jq ".clients | length")
-assertEqual 0 $(echo $RESPONSE | jq ".employees | length")
-
-# Verify that no clients are returned for gym 213
-assertCurl 200 "curl http://$HOST:$PORT/gym-composite/213 -s"
-assertEqual 213 $(echo $RESPONSE | jq .gymId)
 assertEqual 3 $(echo $RESPONSE | jq ".programs | length")
-assertEqual 3 $(echo $RESPONSE | jq ".clients | length")
 assertEqual 3 $(echo $RESPONSE | jq ".employees | length")
+
+# Verify that no programs are returned for mealId $GYM_ID_NO_PROGS
+assertCurl 200 "curl http://$HOST:$PORT/gym-composite/$GYM_ID_NO_PROGS -s"
+assertEqual "$GYM_ID_NO_PROGS" $(echo $RESPONSE | jq .mealId)
+assertEqual 3 $(echo $RESPONSE | jq ".clients | length")
+assertEqual 0 $(echo $RESPONSE | jq ".programs | length")
+assertEqual 3 $(echo $RESPONSE | jq ".employees | length")
+
+# Verify that no ingredients are returned for mealId $GYM_ID_NO_EPMS
+assertCurl 200 "curl http://$HOST:$PORT/gym-composite/$GYM_ID_NO_EPMS -s"
+assertEqual "$GYM_ID_NO_EPMS" $(echo $RESPONSE | jq .mealId)
+assertEqual 3 $(echo $RESPONSE | jq ".clients | length")
+assertEqual 3 $(echo $RESPONSE | jq ".programs | length")
+assertEqual 0 $(echo $RESPONSE | jq ".employees | length")
 
 # Verify that a 422 (Unprocessable Entity) error is returned for a gymId that is out of range (-1)
 assertCurl 422 "curl http://$HOST:$PORT/gym-composite/-1 -s"
@@ -185,11 +262,11 @@ assertEqual "\"Invalid gymId: -1\"" "$(echo $RESPONSE | jq .message)"
 assertCurl 400 "curl http://$HOST:$PORT/gym-composite/invalidGymId -s"
 assertEqual "\"Type mismatch.\"" "$(echo $RESPONSE | jq .message)"
 
+echo "End, all tests OK:" `date`
+
 if [[ $@ == *"stop"* ]]
 then
-    echo "We are done, stopping the test environment..."
-    echo "$ docker-compose down"
-    docker-compose down
+    echo "Stopping the test environment..."
+    echo "$ docker-compose down --remove-orphans"
+    docker-compose down --remove-orphans
 fi
-
-echo "End:" `date`
