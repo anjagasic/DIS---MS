@@ -1,7 +1,7 @@
 server.port: 7001
 server.error.include-message: always
 
-spring.application.name: meal
+spring.application.name: gym
 
 eureka:
   client:
