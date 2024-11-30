@@ -79,21 +79,14 @@ public class GymCompositeIntegration implements GymService, ProgramService, Clie
     public GymCompositeIntegration(
             WebClient.Builder webClientBuilder,
             MessageSources messageSources,
-            ObjectMapper mapper,
-            @Value("${app.gym-service.host}") String gymServiceHost,
-            @Value("${app.gym-service.port}") int gymServicePort,
-            @Value("${app.program-service.host}") String programServiceHost,
-            @Value("${app.program-service.port}") int programServicePort,
-            @Value("${app.client-service.host}") String clientServiceHost,
-            @Value("${app.client-service.port}") int clientServicePort,
-            @Value("${app.employee-service.host}") String employeeCreditServiceHost,
-            @Value("${app.employee-service.port}") int employeeCreditServicePort
+            ObjectMapper mapper
     ) {
         this.messageSources = messageSources;
         this.webClientBuilder = webClientBuilder;
         this.mapper = mapper;
     }
 
+    @Override
     public Mono<Gym> getGym(int gymId) {
         String url = gymServiceUrl + "/gym/" + gymId;
         LOG.debug("Will call getGym API on URL: {}", url);
@@ -118,6 +111,7 @@ public class GymCompositeIntegration implements GymService, ProgramService, Clie
         messageSources.outputGyms().send(MessageBuilder.withPayload(new Event(DELETE, gymId, null)).build());
     }
 
+    @Override
     public Flux<Program> getPrograms(int gymId) {
         String url = programServiceUrl + "/program?gymId=" + gymId;
         LOG.debug("Will call getPrograms API on URL: {}", url);
@@ -139,6 +133,7 @@ public class GymCompositeIntegration implements GymService, ProgramService, Clie
         messageSources.outputPrograms().send(MessageBuilder.withPayload(new Event(DELETE, gymId, null)).build());
     }
 
+    @Override
     public Flux<Client> getClients(int gymId) {
         String url = clientServiceUrl + "/client?gymId=" + gymId;
         LOG.debug("Will call getClients API on URL: {}", url);

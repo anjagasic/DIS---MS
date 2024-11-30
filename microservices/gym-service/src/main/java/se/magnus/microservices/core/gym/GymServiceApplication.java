@@ -27,7 +27,7 @@ public class GymServiceApplication {
 	private static final Logger LOG = LoggerFactory.getLogger(GymServiceApplication.class);
 
 	public static void main(String[] args) {
-		ConfigurableApplicationContext ctx  = SpringApplication.run(GymServiceApplication.class, args);
+		ConfigurableApplicationContext ctx = SpringApplication.run(GymServiceApplication.class, args);
 
 		String mongoDbHost = ctx.getEnvironment().getProperty("spring.data.mongodb.host");
 		String mongoDbPort = ctx.getEnvironment().getProperty("spring.data.mongodb.port");
@@ -43,7 +43,7 @@ public class GymServiceApplication {
 		MappingContext<? extends MongoPersistentEntity<?>, MongoPersistentProperty> mappingContext = mongoTemplate.getConverter().getMappingContext();
 		IndexResolver resolver = new MongoPersistentEntityIndexResolver(mappingContext);
 
-		ReactiveIndexOperations indexOps =mongoTemplate.indexOps(GymEntity.class);
+		ReactiveIndexOperations indexOps = mongoTemplate.indexOps(GymEntity.class);
 		resolver.resolveIndexFor(GymEntity.class).forEach(e -> indexOps.ensureIndex(e).block());
 	}
 }
